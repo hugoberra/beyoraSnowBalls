@@ -69,6 +69,7 @@ public class LevitateOnHit extends SnowballModule implements Listener {
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
         if (!Util.isLivingEntity(event.getHitEntity())) return;
+        if (!SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), event.getHitEntity())) return;
 
         final LivingEntity living = (LivingEntity) event.getHitEntity();
         if (onlyForSpecificEntities && (asBlacklist == configuredTypes.contains(living.getType()))) return;
@@ -77,7 +78,10 @@ public class LevitateOnHit extends SnowballModule implements Listener {
 
         if (SnowballFight.isServerFolia()) {
             SnowballFight.scheduling().entitySpecificScheduler(living)
-                    .run(() -> living.addPotionEffect(levitation), null);
+                    .run(() -> {
+                        if (SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), living))
+                            living.addPotionEffect(levitation);
+                    }, null);
         } else {
             living.addPotionEffect(levitation);
         }

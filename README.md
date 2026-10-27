@@ -7,18 +7,24 @@ Build with a JDK 21 toolchain and the included Gradle wrapper: `./gradlew clean 
 (Windows: `.\gradlew.bat clean build`). The build produces one bundled plugin JAR in `build/libs/`
 and targets Java 21 directly; Java 8 bytecode conversion has been removed.
 
-The server target for this fork is Leaf 1.21.11 (Paper API). Minecraft 26.3 support and world filtering
-are still planned. A successful build does not confirm in-game compatibility, and legacy Spigot
+The server target for this fork is Leaf 1.21.11 (Paper API). Minecraft 26.3 support is still planned.
+A successful build does not confirm in-game compatibility, and legacy Spigot
 compatibility is no longer a development target.
 
-[<img src="https://img.youtube.com/vi/pYHbJ0BOXks/hqdefault.jpg" width="560" height="315"/>](https://www.youtube.com/embed/pYHbJ0BOXks)
+## Version 2.0
+
+World whitelist/blacklist, WorldGuard 7 protection and configurable impact damage are implemented
+in this fork. The existing plugin name, data folder, commands and feature toggles are retained.
+See [configuration and migration](docs/version-2.0.md) and the [live test checklist](docs/testing-2.0.md).
 
 ## Epic snowball battles. Lots of config freedom.
+
 #### Original upstream description
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z3RVMAJ)
 
 ### Description
+
 SnowballFight aims to be highly configurable, adding various features to snowballs in-game:
 
 - snow spread effect when a snowball hits a player, entity or a block
@@ -37,11 +43,13 @@ SnowballFight aims to be highly configurable, adding various features to snowbal
 All features offer lots of customizable options so you can configure each feature according to your preferences!
 
 ### Commands:
+
 - /snowballs reload - Reloads the plugin configuration
 - /snowballs version - Shows the plugin version
 - /snowballs disable - Disable the plugin for testing or better serverutil/plugman reload
 
 ### Permissions:
+
 - snowballfight.cmd.reload - Permission to run /snowballs reload
 - snowballfight.cmd.version - Permission to run /snowballs version
 - snowballfight.cmd.disable - Permission to run /snowballs disable

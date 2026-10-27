@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import me.xginko.snowballfight.protection.ProtectionService;
 
 public class FireworkOnHit extends SnowballModule implements Listener {
 
@@ -136,6 +137,7 @@ public class FireworkOnHit extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        if (!SnowballFight.protection().allows((Snowball) event.getEntity())) return;
 
         if (onlyForEntities) {
             if (event.getHitEntity() == null) return;
@@ -154,7 +156,9 @@ public class FireworkOnHit extends SnowballModule implements Listener {
     }
 
     private void detonateFirework(final Snowball snowball) {
+        if (!SnowballFight.protection().allows(snowball)) return;
         Firework firework = snowball.getWorld().spawn(snowball.getLocation(), Firework.class);
+        SnowballFight.protection().track(firework, snowball, ProtectionService.Effect.FIREWORK, dealDamage, dealKnockback);
         if (effectFireworks != null) {
             effectFireworks.add(firework.getUniqueId()); // Cache uuid to cancel damage/knockback by fireworks
         }

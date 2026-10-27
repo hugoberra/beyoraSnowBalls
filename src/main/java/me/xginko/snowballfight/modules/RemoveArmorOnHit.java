@@ -57,6 +57,7 @@ public class RemoveArmorOnHit extends SnowballModule implements Listener {
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
         if (event.getHitEntity() == null || event.getHitEntity().getType() != XEntityType.PLAYER.get()) return;
+        if (!SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), event.getHitEntity())) return;
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
 
         final Player player = (Player) event.getHitEntity();

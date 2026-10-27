@@ -30,9 +30,11 @@ public class ReloadSubCmd extends SubCommand {
 
         Util.sendMessage(sender, Component.text("Reloading SnowballFight...").color(Util.SNOWY_WHITE));
 
-        SnowballFight.scheduling().asyncScheduler().run(() -> {
-            SnowballFight.getInstance().reloadConfiguration();
+        if (SnowballFight.getInstance().tryReloadConfiguration()) {
             Util.sendMessage(sender, Component.text("Reload complete.").color(Util.SNOWY_BLUE));
-        });
+        } else {
+            Util.sendMessage(sender, Component.text("Reload failed. Check the console; the previous valid configuration was kept when validation failed.")
+                    .color(Util.SNOWY_RED));
+        }
     }
 }

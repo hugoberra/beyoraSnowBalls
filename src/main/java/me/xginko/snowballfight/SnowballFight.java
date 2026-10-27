@@ -12,6 +12,7 @@ import space.arim.morepaperlib.MorePaperLib;
 import space.arim.morepaperlib.scheduling.GracefulScheduling;
 
 import java.util.Objects;
+import me.xginko.snowballfight.protection.ProtectionService;
 
 public final class SnowballFight extends JavaPlugin {
 
@@ -22,6 +23,7 @@ public final class SnowballFight extends JavaPlugin {
     private static GracefulScheduling scheduling;
     private static ComponentLogger logger;
     private static Metrics metrics;
+    private static ProtectionService protection;
     private static boolean isServerPaper, isServerFolia;
 
     @Override
@@ -46,7 +48,12 @@ public final class SnowballFight extends JavaPlugin {
         logger.info(Component.text("         by xGinko          ").style(Util.SNOWY_WHITE_BOLD));
         logger.info(Component.text("                            ").style(Util.SNOWY_WHITE_BOLD));
 
-        reloadConfiguration();
+        protection = new ProtectionService(this);
+        getServer().getPluginManager().registerEvents(protection, this);
+        if (!tryReloadConfiguration()) {
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         Objects.requireNonNull(getCommand("snowballs"), "Command isn't defined in the plugin.yml!")
                 .setExecutor(new SnowballsCommand());
@@ -68,6 +75,7 @@ public final class SnowballFight extends JavaPlugin {
         instance = null;
         logger = null;
         config = null;
+        protection = null;
     }
 
     public void disableRunningTasks() {
@@ -77,14 +85,22 @@ public final class SnowballFight extends JavaPlugin {
     }
 
     public void reloadConfiguration() {
+        tryReloadConfiguration();
+    }
+
+    public boolean tryReloadConfiguration() {
         try {
+            SnowballConfig replacement = new SnowballConfig();
             disableRunningTasks();
-            config = new SnowballConfig();
+            config = replacement;
+            if (protection != null) protection.resetFailure();
             snowballs = new SnowballTracker(config.snowballCacheDuration);
             SnowballModule.reloadModules();
             config.saveConfig();
+            return true;
         } catch (Throwable e) {
             logger.error("Error loading config!", e);
+            return false;
         }
     }
 
@@ -94,6 +110,10 @@ public final class SnowballFight extends JavaPlugin {
 
     public static SnowballTracker snowballTracker() {
         return snowballs;
+    }
+
+    public static ProtectionService protection() {
+        return protection;
     }
 
     public static BukkitAudiences audiences() {

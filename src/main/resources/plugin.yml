@@ -2,10 +2,11 @@ name: '${name}'
 version: '${version}'
 main: me.xginko.snowballfight.SnowballFight
 api-version: '1.13'
-authors: [ xGinko ]
+authors: [ xGinko, BeyoraCraft ]
 description: '${description}'
 website: '${url}'
 folia-supported: true
+softdepend: [ WorldGuard ]
 
 commands:
   snowballs:
@@ -13,9 +14,27 @@ commands:
     description: admin commands
 
 permissions:
+  snowballfight.cmd.*:
+    default: op
+    children:
+      snowballfight.cmd.reload: true
+      snowballfight.cmd.version: true
+      snowballfight.cmd.disable: true
+  snowballfight.cmd.disable:
+    default: op
+  snowballfight.cmd.reload:
+    default: op
+  snowballfight.cmd.version:
+    default: op
   snowballs.cmd.disable:
     description: Disable the plugin
+    children:
+      snowballfight.cmd.disable: true
   snowballs.cmd.reload:
     description: Reload the plugin configuration
+    children:
+      snowballfight.cmd.reload: true
   snowballs.cmd.version:
     description: Show the plugin version
+    children:
+      snowballfight.cmd.version: true

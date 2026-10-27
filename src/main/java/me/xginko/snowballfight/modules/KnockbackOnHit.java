@@ -72,12 +72,16 @@ public class KnockbackOnHit extends SnowballModule implements Listener {
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
         if (event.getHitEntity() == null) return;
+        if (!SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), event.getHitEntity())) return;
         if (onlyForSpecificEntities && (asBlacklist == configuredTypes.contains(event.getHitEntity().getType()))) return;
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
 
         if (SnowballFight.isServerFolia()) {
             SnowballFight.scheduling().entitySpecificScheduler(event.getHitEntity())
-                    .run(() -> doKnockback(event.getHitEntity(), event.getEntity().getVelocity()), null);
+                    .run(() -> {
+                        if (SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), event.getHitEntity()))
+                            doKnockback(event.getHitEntity(), event.getEntity().getVelocity());
+                    }, null);
         } else {
             doKnockback(event.getHitEntity(), event.getEntity().getVelocity());
         }

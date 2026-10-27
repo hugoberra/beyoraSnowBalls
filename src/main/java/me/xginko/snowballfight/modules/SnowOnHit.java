@@ -4,10 +4,12 @@ import com.cryptomorin.xseries.XEntityType;
 import com.cryptomorin.xseries.XMaterial;
 import me.xginko.snowballfight.utils.SnowLayerHelper;
 import me.xginko.snowballfight.utils.Util;
+import me.xginko.snowballfight.SnowballFight;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
@@ -84,6 +86,7 @@ public class SnowOnHit extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        if (!SnowballFight.protection().allows((Snowball) event.getEntity())) return;
 
         if (onlyForEntities) {
             if (event.getHitEntity() == null) return;
@@ -93,15 +96,15 @@ public class SnowOnHit extends SnowballModule implements Listener {
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
 
         if (event.getHitBlock() != null) {
-            coverWithSnowAt(event.getHitBlock());
+            coverWithSnowAt(event.getHitBlock(), (Snowball) event.getEntity());
         }
 
         else if (event.getHitEntity() != null) {
-            coverWithSnowAt(event.getHitEntity().getLocation().getBlock());
+            coverWithSnowAt(event.getHitEntity().getLocation().getBlock(), (Snowball) event.getEntity());
         }
     }
 
-    private void coverWithSnowAt(Block centerBlock) {
+    private void coverWithSnowAt(Block centerBlock, Snowball snowball) {
         final int chunkX = centerBlock.getX() >> 4;
         final int chunkZ = centerBlock.getZ() >> 4;
 
@@ -110,21 +113,22 @@ public class SnowOnHit extends SnowballModule implements Listener {
         }
 
         scheduling.regionSpecificScheduler(centerBlock.getWorld(), chunkX, chunkZ).runDelayed(() -> {
+            if (!SnowballFight.protection().allows(snowball)) return;
             if (snowPatchRadius == 1) {
-                setSnowOrIce(centerBlock.getRelative(BlockFace.UP));
+                setSnowOrIce(centerBlock.getRelative(BlockFace.UP), snowball);
                 return;
             }
 
             for (int x = centerBlock.getX() - snowPatchRadius; x <= centerBlock.getX() + snowPatchRadius; x++) {
                 for (int z = centerBlock.getZ() - snowPatchRadius; z <= centerBlock.getZ() + snowPatchRadius; z++) {
                     for (int y = Math.max(Util.getMinWorldHeight(centerBlock.getWorld()), centerBlock.getY() - snowPatchRadius); y <= centerBlock.getY() + snowPatchRadius; y++) {
-                        if (y > centerBlock.getWorld().getMaxHeight()) break;
+                        if (y >= centerBlock.getWorld().getMaxHeight()) break;
 
                         if (Util.square(
                                 centerBlock.getX() - x,
                                 centerBlock.getY() - y,
                                 centerBlock.getZ() - z) < Util.square(snowPatchRadius) - (snowPatchRadius == 2 ? 1 : 3)) {
-                            setSnowOrIce(centerBlock.getWorld().getBlockAt(x, y, z));
+                            setSnowOrIce(centerBlock.getWorld().getBlockAt(x, y, z), snowball);
                         }
                     }
                 }
@@ -132,7 +136,8 @@ public class SnowOnHit extends SnowballModule implements Listener {
         }, 1L);
     }
 
-    private void setSnowOrIce(final Block block) {
+    private void setSnowOrIce(final Block block, Snowball snowball) {
+        if (!SnowballFight.protection().canPlace(snowball, block, block.getType() == XMaterial.WATER.parseMaterial())) return;
         if (block.getType() == XMaterial.AIR.parseMaterial() || block.getType() == XMaterial.CAVE_AIR.parseMaterial()) {
             if (block.getRelative(BlockFace.DOWN).getType().isSolid()) {
                 block.setType(XMaterial.SNOW.parseMaterial(), true);

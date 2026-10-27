@@ -20,6 +20,8 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.bukkit.entity.Snowball;
+import me.xginko.snowballfight.protection.ProtectionService;
 
 public class LightningOnHit extends SnowballModule implements Listener {
 
@@ -77,6 +79,8 @@ public class LightningOnHit extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        final Snowball snowball = (Snowball) event.getEntity();
+        if (!SnowballFight.protection().allows(snowball)) return;
         if (probability < 1.0 && Util.RANDOM.nextDouble() > probability) return;
 
         final Entity hitEntity = event.getHitEntity();
@@ -88,9 +92,12 @@ public class LightningOnHit extends SnowballModule implements Listener {
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
 
         if (hitEntity != null) {
+            if (!SnowballFight.protection().canAffect(snowball, hitEntity)) return;
             if (SnowballFight.isServerFolia()) SnowballFight.scheduling().entitySpecificScheduler(hitEntity)
-                    .run(() -> strikeLightning(hitEntity.getLocation()), null);
-            else strikeLightning(hitEntity.getLocation());
+                    .run(() -> {
+                        if (SnowballFight.protection().canAffect(snowball, hitEntity)) strikeLightning(hitEntity.getLocation(), snowball);
+                    }, null);
+            else strikeLightning(hitEntity.getLocation(), snowball);
             return;
         }
 
@@ -98,21 +105,20 @@ public class LightningOnHit extends SnowballModule implements Listener {
         if (hitBlock != null) {
             final Location hitBlockLoc = hitBlock.getLocation();
             if (SnowballFight.isServerFolia()) SnowballFight.scheduling().regionSpecificScheduler(hitBlockLoc)
-                    .run(() -> strikeLightning(hitBlockLoc));
-            else strikeLightning(hitBlockLoc);
+                    .run(() -> strikeLightning(hitBlockLoc, snowball));
+            else strikeLightning(hitBlockLoc, snowball);
         }
     }
 
-    private void strikeLightning(final Location strikeLoc) {
+    private void strikeLightning(final Location strikeLoc, Snowball snowball) {
+        if (!SnowballFight.protection().canStrike(snowball, strikeLoc)) return;
         try {
             for (int i = 0; i < strikeAmount; i++) {
-                final LightningStrike lightningStrike;
-
-                if (dealDamage) {
-                    lightningStrike = Objects.requireNonNull(strikeLoc.getWorld(), "World is not set").strikeLightning(strikeLoc);
-                } else {
-                    lightningStrike = Objects.requireNonNull(strikeLoc.getWorld(), "World is not set").strikeLightningEffect(strikeLoc);
-                }
+                final LightningStrike lightningStrike = SnowballFight.protection().during(snowball,
+                        ProtectionService.Effect.LIGHTNING, dealDamage,
+                        () -> dealDamage ? Objects.requireNonNull(strikeLoc.getWorld()).strikeLightning(strikeLoc)
+                                : Objects.requireNonNull(strikeLoc.getWorld()).strikeLightningEffect(strikeLoc));
+                SnowballFight.protection().track(lightningStrike, snowball, ProtectionService.Effect.LIGHTNING, dealDamage);
 
                 lightningStrike.setFlashCount(flashCount);
             }

@@ -27,8 +27,12 @@ public class DamageOnHit extends SnowballModule implements Listener {
     public DamageOnHit() {
         super("settings.damage", false,
                 "\nEnable snowballs dealing damage when they hit an entity.");
-        this.damage = config.getDouble(configPath + ".damage", 3.0,
-                "Configure the damage that entities take from getting hit by a snowball.");
+        this.damage = config.getDouble(configPath + ".amount-snow-ball-damage", config.previousDamageAmount,
+                "Dano base directo al impactar, en puntos de vida (30 = 15 corazones antes de armadura).\n" +
+                "Si no existe esta clave, se migra el valor antiguo 'damage'. No modifica el dano de la explosion.");
+        if (!Double.isFinite(damage) || damage < 0) {
+            throw new IllegalArgumentException("amount-snow-ball-damage must be finite and >= 0");
+        }
         this.onlyPlayers = config.getBoolean(configPath + ".only-thrown-by-player", true,
                 "If enabled will only work if the snowball was thrown by a player.");
         this.onlyForSpecificEntities = config.getBoolean(configPath + ".only-for-specific-entities", false,
@@ -65,6 +69,7 @@ public class DamageOnHit extends SnowballModule implements Listener {
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
         if (!Util.isLivingEntity(event.getHitEntity())) return;
+        if (!SnowballFight.protection().canAffect((org.bukkit.entity.Snowball) event.getEntity(), event.getHitEntity())) return;
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
 
         final LivingEntity livingEntity = (LivingEntity) event.getHitEntity();
@@ -72,9 +77,13 @@ public class DamageOnHit extends SnowballModule implements Listener {
 
         if (SnowballFight.isServerFolia()) {
             SnowballFight.scheduling().entitySpecificScheduler(livingEntity)
-                    .run(() -> livingEntity.damage(damage, event.getEntity()), null);
+                    .run(() -> applyDamage((org.bukkit.entity.Snowball) event.getEntity(), livingEntity), null);
         } else {
-            livingEntity.damage(damage, event.getEntity());
+            applyDamage((org.bukkit.entity.Snowball) event.getEntity(), livingEntity);
         }
+    }
+
+    private void applyDamage(org.bukkit.entity.Snowball snowball, LivingEntity target) {
+        SnowballFight.protection().damageOnImpact(snowball, target, damage);
     }
 }

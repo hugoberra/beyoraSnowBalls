@@ -3,6 +3,7 @@ package me.xginko.snowballfight.modules;
 import com.cryptomorin.xseries.XEntityType;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.xginko.snowballfight.utils.Util;
+import me.xginko.snowballfight.SnowballFight;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
@@ -74,6 +75,7 @@ public class ThrowCoolDown extends SnowballModule implements Listener {
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         private void onPlayerLaunchProjectile(com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent event) {
             if (event.getProjectile().getType() != XEntityType.SNOWBALL.get()) return;
+            if (!SnowballFight.protection().allows((org.bukkit.entity.Snowball) event.getProjectile())) return;
 
             if (player_cooldowns.contains(event.getPlayer().getUniqueId())) {
                 event.setShouldConsume(false);
@@ -87,6 +89,7 @@ public class ThrowCoolDown extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     private void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        if (!SnowballFight.protection().allows((org.bukkit.entity.Snowball) event.getEntity())) return;
 
         final ProjectileSource shooter = event.getEntity().getShooter();
 

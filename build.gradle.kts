@@ -5,11 +5,15 @@ plugins {
 }
 
 group = "me.xginko"
-version = "1.3.2"
+version = "2.0.0"
 description = "Make snowball fights fun and engaging."
 
 repositories {
     mavenCentral()
+
+    maven("https://maven.enginehub.org/repo/") {
+        content { includeGroupByRegex("com\\.sk89q\\..*") }
+    }
 
     maven("https://repo.bsdevelopment.org/releases/") {
         name = "configmaster-repo"
@@ -35,6 +39,11 @@ repositories {
 dependencies {
     paperweight.foliaDevBundle("1.20.6-R0.1-SNAPSHOT");
     compileOnly("org.apache.logging.log4j:log4j-core:2.23.1")
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.2.14")
+    compileOnly("com.sk89q.worldedit:worldedit-core:7.2.14")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
 
     implementation("com.github.thatsmusic99:ConfigurationMaster-API:v2.0.0-rc.1")
     implementation("com.github.ben-manes.caffeine:caffeine:2.9.3")
@@ -58,6 +67,9 @@ java {
 }
 
 tasks {
+    test {
+        useJUnitPlatform()
+    }
     compileJava {
         options.encoding = Charsets.UTF_8.name()
         options.release.set(21)
@@ -95,7 +107,7 @@ tasks {
                             "name" to project.name,
                             "version" to project.version,
                             "description" to project.description!!.replace('"'.toString(), "\\\""),
-                            "url" to "https://github.com/xGinko/SnowballFight"
+                            "url" to "https://github.com/hugoberra/beyoraSnowBalls"
                     )
             )
         }

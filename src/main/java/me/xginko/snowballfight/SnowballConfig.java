@@ -3,13 +3,16 @@ package me.xginko.snowballfight;
 import com.google.common.collect.ImmutableList;
 import io.github.thatsmusic99.configurationmaster.api.ConfigFile;
 import me.xginko.snowballfight.utils.Util;
+import me.xginko.snowballfight.protection.WorldPolicy;
 import org.bukkit.Color;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,11 +23,38 @@ public final class SnowballConfig {
 
     public final @NotNull List<Color> colors;
     public final @NotNull Duration snowballCacheDuration;
+    public final @NotNull WorldPolicy worldPolicy;
+    public final double previousDamageAmount;
 
     SnowballConfig() throws Exception {
         File pluginFolder = SnowballFight.getInstance().getDataFolder();
         Files.createDirectories(pluginFolder.toPath());
-        this.configFile = ConfigFile.loadConfig(new File(pluginFolder, "config.yml"));
+        File file = new File(pluginFolder, "config.yml");
+        YamlConfiguration previous = new YamlConfiguration();
+        if (file.exists()) previous.load(file);
+        if (previous.contains("settings.worlds.use-list-as-a-blacklist")
+                && !previous.isBoolean("settings.worlds.use-list-as-a-blacklist")) {
+            throw new IllegalArgumentException("settings.worlds.use-list-as-a-blacklist must be true or false");
+        }
+        if (previous.contains("settings.worlds.list")) {
+            Object rawWorlds = previous.get("settings.worlds.list");
+            if (!(rawWorlds instanceof List<?> names)
+                    || names.stream().anyMatch(name -> !(name instanceof String text) || text.isBlank())) {
+                throw new IllegalArgumentException("settings.worlds.list must be a list of non-empty world names");
+            }
+        }
+        this.previousDamageAmount = DamageAmount.resolve(previous.get("settings.damage.amount-snow-ball-damage"),
+                previous.get("settings.damage.damage"));
+        this.configFile = ConfigFile.loadConfig(file);
+        if (previous.contains("settings.damage.damage")) {
+            configFile.addDefault("settings.damage.damage", previous.get("settings.damage.damage"),
+                    "Clave antigua conservada. En 2.0 tiene prioridad amount-snow-ball-damage.");
+        }
+
+        boolean worldBlacklist = getBoolean("settings.worlds.use-list-as-a-blacklist", true,
+                "true: desactiva los efectos en los mundos de la lista. false: solo los activa en esos mundos.\n" +
+                "Blacklist vacia: todos los mundos. Whitelist vacia: ninguno. Nombres exactos de los mundos.");
+        this.worldPolicy = new WorldPolicy(worldBlacklist, getList("settings.worlds.list", Collections.emptyList()));
 
         this.snowballCacheDuration = Duration.ofSeconds(getInt("settings.snowball-cache-seconds", 20,
                 "Don't touch unless you know what you're doing."));

@@ -20,13 +20,14 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import me.xginko.snowballfight.protection.ProtectionService;
 
 public class ExplodeOnHit extends SnowballModule implements Listener {
 
     private final Set<EntityType> configuredTypes;
     private final float explosionPower;
     private final boolean explosionSetFire, explosionBreakBlocks, onlyForEntities, onlyForSpecificEntities, asBlacklist,
-            onlyPlayers;
+            onlyPlayers, explosionDealDamage;
 
     public ExplodeOnHit() {
         super("settings.explosions", true,
@@ -35,6 +36,8 @@ public class ExplodeOnHit extends SnowballModule implements Listener {
                 "If enabled will only work if the snowball was thrown by a player.");
         this.explosionPower = config.getFloat(configPath + ".power", 2.0F,
                 "TNT has a power of 4.0.");
+        this.explosionDealDamage = config.getBoolean(configPath + ".deal-damage", true,
+                "Dano nativo de la explosion. Desactivalo para controlar el dano solo con settings.damage.");
         this.explosionSetFire = config.getBoolean(configPath + ".set-fire", false,
                 "Enable explosion fire like with respawn anchors.");
         this.explosionBreakBlocks = config.getBoolean(configPath + ".break-blocks", true,
@@ -76,6 +79,7 @@ public class ExplodeOnHit extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onProjectileHit(ProjectileHitEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        if (!SnowballFight.protection().canExplode((Snowball) event.getEntity(), event.getEntity().getLocation())) return;
 
         if (onlyForEntities) {
             if (event.getHitEntity() == null) return;
@@ -101,7 +105,8 @@ public class ExplodeOnHit extends SnowballModule implements Listener {
 
         plugin.getServer().getPluginManager().callEvent(preSnowballExplodeEvent);
 
-        if (preSnowballExplodeEvent.isCancelled()) {
+        if (preSnowballExplodeEvent.isCancelled()
+                || !SnowballFight.protection().canExplode(preSnowballExplodeEvent.getSnowball(), preSnowballExplodeEvent.getLocation())) {
             return;
         }
 
@@ -112,7 +117,8 @@ public class ExplodeOnHit extends SnowballModule implements Listener {
                 preSnowballExplodeEvent.getPower(),
                 preSnowballExplodeEvent.getFire(),
                 preSnowballExplodeEvent.getBreakBlocks(),
-                createExplosion(preSnowballExplodeEvent)
+                SnowballFight.protection().during(preSnowballExplodeEvent.getSnowball(), ProtectionService.Effect.EXPLOSION,
+                        explosionDealDamage, () -> createExplosion(preSnowballExplodeEvent))
         );
 
         plugin.getServer().getPluginManager().callEvent(postSnowballExplodeEvent);

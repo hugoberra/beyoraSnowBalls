@@ -66,6 +66,7 @@ public class TrailsWhenThrown extends SnowballModule implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     private void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (event.getEntityType() != XEntityType.SNOWBALL.get()) return;
+        if (!SnowballFight.protection().allows((Snowball) event.getEntity())) return;
         if (onlyPlayers && !(event.getEntity().getShooter() instanceof Player)) return;
         if (particleTasks.containsKey(event.getEntity().getUniqueId())) return;
 
@@ -98,8 +99,11 @@ public class TrailsWhenThrown extends SnowballModule implements Listener {
 
         @Override
         public void run() {
-            if (wrappedSnowball.snowball.isDead() || System.currentTimeMillis() >= expireMillis) {
-                particleTasks.remove(wrappedSnowball.snowball.getUniqueId()).cancel();
+            if (particleTasks == null) return;
+            if (wrappedSnowball.snowball.isDead() || System.currentTimeMillis() >= expireMillis
+                    || !SnowballFight.protection().allows(wrappedSnowball.snowball)) {
+                ScheduledTask task = particleTasks.remove(wrappedSnowball.snowball.getUniqueId());
+                if (task != null) task.cancel();
                 return;
             }
 
@@ -107,7 +111,8 @@ public class TrailsWhenThrown extends SnowballModule implements Listener {
                 ParticleHelper.spawnDustParticle(wrappedSnowball.snowball.getLocation(), wrappedSnowball.getPrimaryColor(), amount, size);
                 ParticleHelper.spawnDustParticle(wrappedSnowball.snowball.getLocation(), wrappedSnowball.getSecondaryColor(), amount, size);
             } catch (Throwable t) {
-                particleTasks.remove(wrappedSnowball.snowball.getUniqueId()).cancel();
+                ScheduledTask task = particleTasks.remove(wrappedSnowball.snowball.getUniqueId());
+                if (task != null) task.cancel();
                 SnowballFight.logger().warn("Trail task ended with an exception - {}", t.getLocalizedMessage());
             }
         }
