@@ -1,9 +1,20 @@
 # SnowballFight
 
+This is BeyoraCraft's development fork of [SnowballFight by xGinko](https://github.com/xGinko/SnowballFight).
+The original author credits and plugin identity are retained while the fork is being prepared.
+
+Build with a JDK 21 toolchain and the included Gradle wrapper: `./gradlew clean build`
+(Windows: `.\gradlew.bat clean build`). The build produces one bundled plugin JAR in `build/libs/`
+and targets Java 21 directly; Java 8 bytecode conversion has been removed.
+
+The server target for this fork is Leaf 1.21.11 (Paper API). Minecraft 26.3 support and world filtering
+are still planned. A successful build does not confirm in-game compatibility, and legacy Spigot
+compatibility is no longer a development target.
+
 [<img src="https://img.youtube.com/vi/pYHbJ0BOXks/hqdefault.jpg" width="560" height="315"/>](https://www.youtube.com/embed/pYHbJ0BOXks)
 
 ## Epic snowball battles. Lots of config freedom.
-#### For minecraft servers running paper / folia 1.16.5 - 1.20.4.
+#### Original upstream description
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z3RVMAJ)
 

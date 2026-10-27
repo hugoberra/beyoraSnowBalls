@@ -114,11 +114,7 @@ public class LightningOnHit extends SnowballModule implements Listener {
                     lightningStrike = Objects.requireNonNull(strikeLoc.getWorld(), "World is not set").strikeLightningEffect(strikeLoc);
                 }
 
-                if (SnowballFight.isServerPaper()) {
-                    lightningStrike.setFlashCount(flashCount);
-                } else {
-                    lightningStrike.setFlashes(flashCount);
-                }
+                lightningStrike.setFlashCount(flashCount);
             }
         } catch (Throwable t) {
             warn(t.getLocalizedMessage());

@@ -8,7 +8,6 @@ import me.xginko.snowballfight.utils.Enableable;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
 import space.arim.morepaperlib.scheduling.GracefulScheduling;
 
 import java.lang.reflect.Modifier;
@@ -19,17 +18,16 @@ import java.util.stream.Collectors;
 
 public abstract class SnowballModule implements Enableable, Disableable {
 
-    protected static final Set<Class<SnowballModule>> AVAILABLE_MODULES;
+    protected static final Set<Class<? extends SnowballModule>> AVAILABLE_MODULES;
     protected static final Set<SnowballModule> ENABLED_MODULES;
 
     static {
         // Disable reflection logging for this operation because its just confusing and provides no value.
         Configurator.setLevel(SnowballFight.class.getPackage().getName() + ".libs.reflections.Reflections", Level.OFF);
         AVAILABLE_MODULES = new Reflections(SnowballModule.class.getPackage().getName())
-                .get(Scanners.SubTypes.of(SnowballModule.class).asClass())
+                .getSubTypesOf(SnowballModule.class)
                 .stream()
                 .filter(clazz -> !clazz.isInterface() && !Modifier.isAbstract(clazz.getModifiers()))
-                .map(clazz -> (Class<SnowballModule>) clazz)
                 .sorted(Comparator.comparing(Class::getSimpleName))
                 .collect(Collectors.collectingAndThen(Collectors.toList(), ImmutableSet::copyOf));
         ENABLED_MODULES = new HashSet<>();
@@ -74,7 +72,7 @@ public abstract class SnowballModule implements Enableable, Disableable {
     public static void reloadModules() {
         disableAll();
 
-        for (Class<SnowballModule> moduleClass : AVAILABLE_MODULES) {
+        for (Class<? extends SnowballModule> moduleClass : AVAILABLE_MODULES) {
             try {
                 SnowballModule module = moduleClass.getDeclaredConstructor().newInstance();
                 if (module.shouldEnable()) {

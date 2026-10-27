@@ -1,8 +1,7 @@
 plugins {
     java
-    id("com.gradleup.shadow") version ("8.3.2")
+    id("com.gradleup.shadow") version ("9.6.1")
     id("io.papermc.paperweight.userdev") version ("1.7.4")
-    id("xyz.wagyourtail.jvmdowngrader") version ("1.2.0")
 }
 
 group = "me.xginko"
@@ -12,7 +11,7 @@ description = "Make snowball fights fun and engaging."
 repositories {
     mavenCentral()
 
-    maven("https://ci.pluginwiki.us/plugin/repository/everything/") {
+    maven("https://repo.bsdevelopment.org/releases/") {
         name = "configmaster-repo"
     }
 
@@ -61,20 +60,21 @@ java {
 tasks {
     compileJava {
         options.encoding = Charsets.UTF_8.name()
+        options.release.set(21)
     }
 
     javadoc {
         options.encoding = Charsets.UTF_8.name()
     }
 
-    build.configure {
+    assemble {
         dependsOn("shadowJar")
     }
 
     shadowJar {
         archiveFileName.set("SnowballFight-${version}.jar")
         relocate("io.github.thatsmusic99.configurationmaster", "me.xginko.snowballfight.libs.configmaster")
-        relocate("com.github.cryptomorin.xseries", "me.xginko.snowballfight.libs.xseries")
+        relocate("com.cryptomorin.xseries", "me.xginko.snowballfight.libs.xseries")
         exclude(
             "com/cryptomorin/xseries/XBiome*",
             "com/cryptomorin/xseries/NMSExtras*",
@@ -102,17 +102,6 @@ tasks {
     }
 
     jar {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        dependsOn(shadowJar.get())
-        from(zipTree(shadowJar.get().archiveFile))
-        finalizedBy("shadeDowngradedApi")
-    }
-
-    shadeDowngradedApi {
-        archiveFileName = shadowJar.get().archiveFileName
-        destinationDirectory = projectDir.resolve("build/libs")
-
-        downgradeTo = JavaVersion.VERSION_1_8
-        shadePath = { _ -> "me/xginko/shadow/jvmdowngrader" }
+        enabled = false
     }
 }
